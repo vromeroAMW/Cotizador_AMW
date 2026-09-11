@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -338,6 +339,17 @@
       </div>
     </div>
 
+    <div class="card">
+      <h2>IVA</h2>
+      <p class="hint">Se calcula sobre el subtotal (materiales + diseño + corte + pintura + transporte + costos fijos + utilidad + comisión ± ajuste) y se muestra como línea aparte, tanto en el presupuesto interno como en la cotización al cliente.</p>
+      <div class="field-row">
+        <div class="field">
+          <label>IVA (%)</label>
+          <input type="number" id="cfgIvaPct" value="13">
+        </div>
+      </div>
+    </div>
+
     <div class="card no-print">
       <h2>Guardar / cargar configuración</h2>
       <p class="hint">No se guarda automáticamente entre sesiones del navegador. Exporte un archivo de configuración para reutilizarlo después.</p>
@@ -556,7 +568,8 @@ function cfg(){
     transporteDefecto: num('cfgTransporteDefecto'),
     costosFijosPct: num('cfgCostosFijosPct') / 100,
     utilidadPct: num('cfgUtilidadPct') / 100,
-    comisionPct: num('cfgComisionPct') / 100
+    comisionPct: num('cfgComisionPct') / 100,
+    ivaPct: num('cfgIvaPct') / 100
   };
 }
 function val(id){ return document.getElementById(id).value; }
@@ -835,7 +848,7 @@ document.getElementById('cfgLogoFile').addEventListener('change', function(e){
 ['cfgColorPrimario','cfgColorAcento','cfgEmpresa','cfgSlogan','cfgContacto',
  'cfgFactorDesperdicio',
  'cfgTarifaCorte','cfgTarifaDiseno','cfgCostoPintura','cfgTransporteDefecto',
- 'cfgCostosFijosPct','cfgUtilidadPct','cfgComisionPct'
+ 'cfgCostosFijosPct','cfgUtilidadPct','cfgComisionPct','cfgIvaPct'
 ].forEach(id=>{
   document.getElementById(id).addEventListener('input', ()=>{ renderItemsForm(); render(); });
 });
@@ -884,9 +897,6 @@ function importConfig(e){
 }
 
 /* ---------------------------------------------------------
-   RENDER: quote preview
---------------------------------------------------------- */
-/* ---------------------------------------------------------
    RENDER: presupuesto detallado interno
 --------------------------------------------------------- */
 function renderPresupuesto(){
@@ -909,6 +919,8 @@ function renderPresupuesto(){
   const utilidad = baseDirecta * c.utilidadPct;
   const comision = baseDirecta * c.comisionPct;
   const total = baseDirecta + costosFijos + utilidad + comision + ajusteGeneral;
+  const iva = total * c.ivaPct;
+  const totalConIva = total + iva;
 
   tbody.innerHTML = results.length ? results.map(({it,r}) => {
     const medida = it.tipo === 'completa' ? '120 × 242 cm (lámina completa)'
@@ -939,7 +951,9 @@ function renderPresupuesto(){
     <div class="row"><span>Utilidad (${(c.utilidadPct*100).toFixed(0)}%)</span><span>${fmt(utilidad)}</span></div>
     <div class="row"><span>Comisión (${(c.comisionPct*100).toFixed(0)}%)</span><span>${fmt(comision)}</span></div>
     ${ajusteGeneral ? `<div class="row"><span>Ajuste</span><span>${fmt(ajusteGeneral)}</span></div>` : ''}
-    <div class="row total"><span>Total</span><span>${fmt(total)}</span></div>
+    <div class="row" style="border-top:1px solid var(--line); margin-top:6px; padding-top:10px;"><span>Subtotal</span><span>${fmt(total)}</span></div>
+    <div class="row"><span>IVA (${(c.ivaPct*100).toFixed(0)}%)</span><span>${fmt(iva)}</span></div>
+    <div class="row total"><span>Total</span><span>${fmt(totalConIva)}</span></div>
   `;
 }
 
@@ -967,6 +981,8 @@ function render(){
   const comision = baseDirecta * c.comisionPct;
 
   const total = baseDirecta + costosFijos + utilidad + comision + ajusteGeneral;
+  const iva = total * c.ivaPct;
+  const totalConIva = total + iva;
 
   const rowsHtml = results.map(({it,r}) => {
     const medida = it.tipo === 'completa' ? '120 × 242 cm (lámina completa)'
@@ -1035,7 +1051,9 @@ function render(){
         <div class="row"><span>Pintura</span><span>${fmt(totalPintura)}</span></div>
         <div class="row"><span>Transporte</span><span>${fmt(transporte)}</span></div>
         ${ajusteGeneral ? `<div class="row"><span>Ajuste</span><span>${fmt(ajusteGeneral)}</span></div>` : ''}
-        <div class="row total"><span>Total</span><span>${fmt(total)}</span></div>
+        <div class="row" style="border-top:1px solid var(--line); margin-top:6px; padding-top:10px;"><span>Subtotal</span><span>${fmt(total)}</span></div>
+        <div class="row"><span>IVA (${(c.ivaPct*100).toFixed(0)}%)</span><span>${fmt(iva)}</span></div>
+        <div class="row total"><span>Total</span><span>${fmt(totalConIva)}</span></div>
       </div>
     </div>
     <div class="quote-footer">
