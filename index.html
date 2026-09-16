@@ -968,19 +968,19 @@ function render(){
 
   const results = items.map(it => ({ it, r: computeItem(it, c) }));
 
-  const totalMaterial = results.reduce((s,x)=>s+x.r.material,0);
-  const totalDiseno   = results.reduce((s,x)=>s+x.r.diseno,0);
-  const totalCorte    = results.reduce((s,x)=>s+x.r.corte,0);
-  const totalPintura  = results.reduce((s,x)=>s+x.r.pintura,0);
+  // El markup (costos fijos + utilidad + comisión) es información oculta para el
+  // cliente: se reparte proporcionalmente dentro de cada línea y cada categoría
+  // (material/diseño/corte/pintura). El transporte queda aparte, sin markup.
+  const markupFactor = 1 + c.costosFijosPct + c.utilidadPct + c.comisionPct;
+
+  const totalMaterial = results.reduce((s,x)=>s+x.r.material,0) * markupFactor;
+  const totalDiseno   = results.reduce((s,x)=>s+x.r.diseno,0) * markupFactor;
+  const totalCorte    = results.reduce((s,x)=>s+x.r.corte,0) * markupFactor;
+  const totalPintura  = results.reduce((s,x)=>s+x.r.pintura,0) * markupFactor;
   const transporte = num('qTransporte');
   const ajusteGeneral = num('qAjusteGeneral');
 
-  const baseDirecta = totalMaterial + totalDiseno + totalCorte + totalPintura + transporte;
-  const costosFijos = baseDirecta * c.costosFijosPct;
-  const utilidad = baseDirecta * c.utilidadPct;
-  const comision = baseDirecta * c.comisionPct;
-
-  const total = baseDirecta + costosFijos + utilidad + comision + ajusteGeneral;
+  const total = totalMaterial + totalDiseno + totalCorte + totalPintura + transporte + ajusteGeneral;
   const iva = total * c.ivaPct;
   const totalConIva = total + iva;
 
@@ -990,6 +990,7 @@ function render(){
                  : `${it.ancho} × ${it.alto} cm (medida especial)`;
     const material_ = getMaterial(it.materialId);
     const nombreMaterial = material_ ? material_.nombre : '—';
+    const subtotalLinea = r.subtotal * markupFactor;
     return `
       <tr>
         <td>
@@ -998,7 +999,7 @@ function render(){
         </td>
         <td>${escapeHtml(nombreMaterial)}</td>
         <td class="num">${it.cantidad}</td>
-        <td class="num"><strong>${fmt(r.subtotal)}</strong></td>
+        <td class="num"><strong>${fmt(subtotalLinea)}</strong></td>
       </tr>
     `;
   }).join('');
