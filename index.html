@@ -688,8 +688,31 @@ function updateItem(id, field, value){
   } else {
     it[field] = value;
   }
-  renderItemsForm();
+  if(field === 'tipo'){
+    // Cambia qué campos se muestran (ancho/alto) — sí requiere reconstruir el bloque.
+    renderItemsForm();
+  } else {
+    // Resto de campos: solo refrescamos los montos calculados, sin recrear los
+    // inputs, para no perder el foco mientras la persona sigue escribiendo.
+    refreshItemCosts(id);
+  }
   render();
+}
+function refreshItemCosts(id){
+  const it = items.find(i => i.id === id);
+  if(!it) return;
+  const c = cfg();
+  const r = computeItem(it, c);
+  const matEl = document.getElementById('mat-'+id);
+  const desEl = document.getElementById('des-'+id);
+  const corEl = document.getElementById('cor-'+id);
+  const pinEl = document.getElementById('pin-'+id);
+  const subEl = document.getElementById('sub-'+id);
+  if(matEl && document.activeElement !== matEl) matEl.value = Math.round(r.material);
+  if(desEl && document.activeElement !== desEl) desEl.value = Math.round(r.diseno);
+  if(corEl && document.activeElement !== corEl) corEl.value = Math.round(r.corte);
+  if(pinEl && document.activeElement !== pinEl) pinEl.value = Math.round(r.pintura);
+  if(subEl) subEl.textContent = 'Subtotal modelo: ' + fmt(r.subtotal);
 }
 function setOverride(id, field, value){
   const it = items.find(i => i.id === id);
@@ -808,25 +831,25 @@ function renderItemsForm(){
 
       <div class="cost-line">
         <label>Material</label>
-        <input type="number" value="${Math.round(r.material)}" oninput="setOverride(${it.id},'ovMaterial',this.value)">
+        <input type="number" id="mat-${it.id}" value="${Math.round(r.material)}" oninput="setOverride(${it.id},'ovMaterial',this.value)">
         ${it.ovMaterial!==null ? `<button class="reset-btn" onclick="resetOverride(${it.id},'ovMaterial')">restaurar auto</button>`:'<span></span>'}
       </div>
       <div class="cost-line">
         <label>Diseño / montaje</label>
-        <input type="number" value="${Math.round(r.diseno)}" oninput="setOverride(${it.id},'ovDiseno',this.value)">
+        <input type="number" id="des-${it.id}" value="${Math.round(r.diseno)}" oninput="setOverride(${it.id},'ovDiseno',this.value)">
         ${it.ovDiseno!==null ? `<button class="reset-btn" onclick="resetOverride(${it.id},'ovDiseno')">restaurar auto</button>`:'<span></span>'}
       </div>
       <div class="cost-line">
         <label>Corte</label>
-        <input type="number" value="${Math.round(r.corte)}" oninput="setOverride(${it.id},'ovCorte',this.value)">
+        <input type="number" id="cor-${it.id}" value="${Math.round(r.corte)}" oninput="setOverride(${it.id},'ovCorte',this.value)">
         ${it.ovCorte!==null ? `<button class="reset-btn" onclick="resetOverride(${it.id},'ovCorte')">restaurar auto</button>`:'<span></span>'}
       </div>
       <div class="cost-line">
         <label>Pintura</label>
-        <input type="number" value="${Math.round(r.pintura)}" oninput="setOverride(${it.id},'ovPintura',this.value)">
+        <input type="number" id="pin-${it.id}" value="${Math.round(r.pintura)}" oninput="setOverride(${it.id},'ovPintura',this.value)">
         ${it.ovPintura!==null ? `<button class="reset-btn" onclick="resetOverride(${it.id},'ovPintura')">restaurar auto</button>`:'<span></span>'}
       </div>
-      <div class="item-subtotal">Subtotal modelo: ${fmt(r.subtotal)}</div>
+      <div class="item-subtotal" id="sub-${it.id}">Subtotal modelo: ${fmt(r.subtotal)}</div>
     `;
     cont.appendChild(block);
   });
